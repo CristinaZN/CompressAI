@@ -13,6 +13,12 @@ end-to-end compression research.
 
 ![IVC_final_project_result](IVC_Lab_result/IVC_final_project_result.png)
 
+The latest AI-intra-encoding (`Elic2022Chandelier`) can perform better than inter-encoding in CH5. This model is defined in `compressai/models/sensetime.py`. 
+
+Also, I trained the AI-inter-encoding (`ScaleSpaceFlow`), which applies a similar work-flow with CH5. This model is defined in `compressai/models/video.google.py`. This AI-inter-encoding uses a VAE-arch (`MeanScaleHyperprior`) as its AI-intra-encoding module, which is defined in `compressai/models/google.py`. 
+
+This AI-inter-encoding (`ScaleSpaceFlow`) can be optimized by applying other better intra-encoding modules, such as `JointAutoregressiveHierarchicalPriors`, `Elic2022Chandelier`. However, training for those models is much more time-consuming than using `MeanScaleHyperprior`. Both `JointAutoregressiveHierarchicalPriors` and `Elic2022Chandelier` applies a sequencial encoding in their context-models, which could cost too much time on RTX3060 if I applied them into the `ScaleSpaceFlow`. So, I choose to try these two models, `MeanScaleHyperprior` and `ScaleSpaceFlow`, as a comparison with CH4 (intra-encoding) and CH5 (inter-encoding). Even using the fastest VAE-arch intra-encoding (`MeanScaleHyperprior`) costs about 2 weeks for training to get 7 different RD-points, which implies the practical diffculty when apply other sophisticated intra-encoding models in the inter-encoding model.
+
 
 
 
