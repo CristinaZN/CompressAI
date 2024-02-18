@@ -1,0 +1,21 @@
+{
+  "name": "elic2022-chandelier-mse",
+  "description": "Inference (ans)",
+  "results": {
+    "psnr-rgb": [
+      38.586896078927175
+    ],
+    "ms-ssim-rgb": [
+      0.9944990447589329
+    ],
+    "bpp": [
+      2.669612794612795
+    ],
+    "encoding_time": [
+      0.18560784203665598
+    ],
+    "decoding_time": [
+      0.06249311992100307
+    ]
+  }
+}

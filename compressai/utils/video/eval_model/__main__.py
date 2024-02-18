@@ -64,7 +64,7 @@ models = {"ssf2020": ScaleSpaceFlow}
 
 Frame = Union[Tuple[Tensor, Tensor, Tensor], Tuple[Tensor, ...]]
 
-RAWVIDEO_EXTENSIONS = (".yuv",)  # read raw yuv videos for now
+RAWVIDEO_EXTENSIONS = (".yuv",".bmp")  # read raw yuv videos for now
 
 
 def collect_videos(rootpath: str) -> List[str]:
@@ -137,28 +137,30 @@ def compute_metrics_for_frame(
     out: Dict[str, Any] = {}
 
     # YCbCr metrics
-    org_yuv = to_tensors(org_frame, device=str(device), max_value=max_val)
-    org_yuv = tuple(p.unsqueeze(0).unsqueeze(0) for p in org_yuv)  # type: ignore
-    rec_yuv = convert_rgb_to_yuv420(rec_frame)
-    for i, component in enumerate("yuv"):
-        org = (org_yuv[i] * max_val).clamp(0, max_val).round()
-        rec = (rec_yuv[i] * max_val).clamp(0, max_val).round()
-        out[f"psnr-{component}"] = 20 * np.log10(max_val) - 10 * torch.log10(
-            (org - rec).pow(2).mean()
-        )
-    out["psnr-yuv"] = (4 * out["psnr-y"] + out["psnr-u"] + out["psnr-v"]) / 6
+    # org_yuv = to_tensors(org_frame, device=str(device), max_value=max_val)
+    # org_yuv = tuple(p.unsqueeze(0).unsqueeze(0) for p in org_yuv)  # type: ignore
+    # rec_yuv = convert_rgb_to_yuv420(rec_frame)
+    # for i, component in enumerate("yuv"):
+    #     org = (org_yuv[i] * max_val).clamp(0, max_val).round()
+    #     rec = (rec_yuv[i] * max_val).clamp(0, max_val).round()
+    #     out[f"psnr-{component}"] = 20 * np.log10(max_val) - 10 * torch.log10(
+    #         (org - rec).pow(2).mean()
+    #     )
+    # out["psnr-yuv"] = (4 * out["psnr-y"] + out["psnr-u"] + out["psnr-v"]) / 6
 
     # RGB metrics
-    org_rgb = convert_yuv420_to_rgb(
-        org_frame, device, max_val
-    )  # ycbcr2rgb(yuv_420_to_444(org_frame, mode="bicubic"))  # type: ignore
-    org_rgb = (org_rgb * max_val).clamp(0, max_val).round()
+    # org_rgb = convert_yuv420_to_rgb(
+    #     org_frame, device, max_val
+    # )  # ycbcr2rgb(yuv_420_to_444(org_frame, mode="bicubic"))  # type: ignore
+    org_frame = torch.tensor(org_frame, device=device).permute((0,3,1,2))/max_val
+    org_rgb = (org_frame * max_val).clamp(0, max_val).round()
     rec_frame = (rec_frame * max_val).clamp(0, max_val).round()
+    # print(org_rgb.size(), rec_frame.size())
     mse_rgb = (org_rgb - rec_frame).pow(2).mean()
     psnr_rgb = 20 * np.log10(max_val) - 10 * torch.log10(mse_rgb)
 
-    ms_ssim_rgb = ms_ssim(org_rgb, rec_frame, data_range=max_val)
-    out.update({"ms-ssim-rgb": ms_ssim_rgb, "mse-rgb": mse_rgb, "psnr-rgb": psnr_rgb})
+    # ms_ssim_rgb = ms_ssim(org_rgb, rec_frame, data_range=max_val)
+    out.update({"mse-rgb": mse_rgb, "psnr-rgb": psnr_rgb})
 
     return out
 
@@ -234,28 +236,41 @@ def write_body(fd, shape, out_strings):
 def eval_model(
     net: nn.Module, sequence: Path, binpath: Path, keep_binaries: bool = False
 ) -> Dict[str, Any]:
-    org_seq = RawVideoSequence.from_file(str(sequence))
+    # org_seq = RawVideoSequence.from_file(str(sequence))
+    
+    # if org_seq.format != VideoFormat.YUV420:
+    #     raise NotImplementedError(f"Unsupported video format: {org_seq.format}")
+    from PIL import Image
+    org_seq = []
+    ori_height = 0
+    ori_weight = 0
 
-    if org_seq.format != VideoFormat.YUV420:
-        raise NotImplementedError(f"Unsupported video format: {org_seq.format}")
+    for i in range(0, len(sequence)):
 
+        org_seq.append(np.array(Image.open(sequence[i]))[None, :],)
+        
+
+    ori_height, ori_weight, c = org_seq[0][0].shape
     device = next(net.parameters()).device
     num_frames = len(org_seq)
-    max_val = 2**org_seq.bitdepth - 1
+    # max_val = 2**org_seq.bitdepth - 1
+    max_val = 255
+    ori_bitdepth = 8
     results = defaultdict(list)
 
     f = binpath.open("wb")
 
-    print(f" encoding {sequence.stem}", file=sys.stderr)
+    print(f" encoding {sequence[0].stem}", file=sys.stderr)
     # write original image size
-    write_uints(f, (org_seq.height, org_seq.width))
+    write_uints(f, (ori_height, ori_weight))
     # write original bitdepth
-    write_uchars(f, (org_seq.bitdepth,))
+    write_uchars(f, (ori_bitdepth,))
     # write number of coded frames
     write_uints(f, (num_frames,))
     with tqdm(total=num_frames) as pbar:
         for i in range(num_frames):
-            x_cur = convert_yuv420_to_rgb(org_seq[i], device, max_val)
+            # x_cur = convert_yuv420_to_rgb(org_seq[i], device, max_val)
+            x_cur = torch.tensor(org_seq[i], device=device).permute((0, 3, 1, 2))/max_val
             x_cur, padding = pad(x_cur)
 
             if i == 0:
@@ -287,8 +302,8 @@ def eval_model(
         k: torch.mean(torch.stack(v)) for k, v in results.items()
     }
 
-    seq_results["bitrate"] = (
-        float(filesize(binpath)) * 8 * org_seq.framerate / (num_frames * 1000)
+    seq_results["bpp"] = (
+        float(filesize(binpath)) * 8 / (num_frames * ori_height * ori_weight)
     )
 
     if not keep_binaries:
@@ -359,34 +374,35 @@ def run_inference(
 ) -> Dict[str, Any]:
     results_paths = []
 
-    for filepath in filepaths:
-        output_subdir = Path(outputdir) / Path(filepath).parent.relative_to(inputdir)
-        output_subdir.mkdir(parents=True, exist_ok=True)
-        sequence_metrics_path = output_subdir / f"{filepath.stem}-{trained_net}.json"
-        results_paths.append(sequence_metrics_path)
+    # for filepath in filepaths:
+    output_subdir = Path(outputdir) / Path(filepaths[0]).parent.relative_to(inputdir)
+    output_subdir.mkdir(parents=True, exist_ok=True)
+    sequence_metrics_path = output_subdir / f"{filepaths[0].stem}-{trained_net}.json"
+    results_paths.append(sequence_metrics_path)
 
-        if force:
-            sequence_metrics_path.unlink(missing_ok=True)
-        if sequence_metrics_path.is_file():
-            continue
+    if force:
+        sequence_metrics_path.unlink(missing_ok=True)
+    # if sequence_metrics_path.is_file():
+    #     continue
 
-        with amp.autocast(enabled=args["half"]):
-            with torch.no_grad():
-                if entropy_estimation:
-                    metrics = eval_model_entropy_estimation(net, filepath)
-                else:
-                    sequence_bin = sequence_metrics_path.with_suffix(".bin")
-                    metrics = eval_model(
-                        net, filepath, sequence_bin, args["keep_binaries"]
-                    )
-        with sequence_metrics_path.open("wb") as f:
-            output = {
-                "source": filepath.stem,
-                "name": args["architecture"],
-                "description": f"Inference ({description})",
-                "results": metrics,
-            }
-            f.write(json.dumps(output, indent=2).encode())
+    with amp.autocast(enabled=args["half"]):
+        with torch.no_grad():
+            if entropy_estimation:
+                metrics = eval_model_entropy_estimation(net, filepaths)
+            else:
+                sequence_bin = sequence_metrics_path.with_suffix(".bin")
+                # print(filepath)
+                metrics = eval_model(
+                    net, filepaths, sequence_bin, args["keep_binaries"]
+                )
+    with sequence_metrics_path.open("wb") as f:
+        output = {
+            "source": filepaths[0].stem,
+            "name": args["architecture"],
+            "description": f"Inference ({description})",
+            "results": metrics,
+        }
+        f.write(json.dumps(output, indent=2).encode())
     results = aggregate_results(results_paths)
     return results
 

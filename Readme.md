@@ -9,52 +9,29 @@
 CompressAI (_compress-ay_) is a PyTorch library and evaluation platform for
 end-to-end compression research.
 
-CompressAI currently provides:
+## Result for IVC Lab Final Project
 
-* custom operations, layers and models for deep learning based data compression
-* a partial port of the official [TensorFlow compression](https://github.com/tensorflow/compression) library
-* pre-trained end-to-end compression models for learned image compression
-* evaluation scripts to compare learned models against classical image/video
-  compression codecs
-
-![PSNR performances plot on Kodak](assets/kodak-psnr.png)
+![IVC_final_project_result](IVC_Lab_result/IVC_final_project_result.png)
 
 
-> **Note**: Multi-GPU support is now experimental.
+
 
 ## Installation
 
 CompressAI supports python 3.6+ and PyTorch 1.7+.
-
-**pip**:
-
-```bash
-pip install compressai
-```
-
-> **Note**: wheels are available for Linux and MacOS.
 
 **From source**:
 
 A C++17 compiler, a recent version of pip (19.0+), and common python packages
 are also required (see `setup.py` for the full list).
 
-To get started locally and install the development version of CompressAI, run
-the following commands in a [virtual environment](https://docs.python.org/3.6/library/venv.html):
 
 ```bash
-git clone https://github.com/InterDigitalInc/CompressAI compressai
-cd compressai
+git clone https://github.com/CristinaZN/CompressAI.git
+cd CompressAI
 pip install -U pip && pip install -e .
 ```
 
-For a custom installation, you can also run one of the following commands:
-* `pip install -e '.[dev]'`: install the packages required for development (testing, linting, docs)
-* `pip install -e '.[tutorials]'`: install the packages required for the tutorials (notebooks)
-* `pip install -e '.[all]'`: install all the optional packages
-
-> **Note**: Docker images will be released in the future. Conda environments are not
-officially supported.
 
 ## Documentation
 
@@ -65,83 +42,86 @@ officially supported.
 
 ## Usage
 
-### Examples
+### Examples(**for IVC lab**)
 
-Script and notebook examples can be found in the `examples/` directory.
+### Comparison AI intra-encoding with intra-encoding in CH4
 
-To encode/decode images with the provided pre-trained models, run the
-`codec.py` example:
+#### train: for model `elic2022-chandelier` and `mbt2018-mean` 
 
-```bash
-python3 examples/codec.py --help
-```
+**dataset(CLIC)**:
 
-An examplary training script with a rate-distortion loss is provided in
-`examples/train.py`. You can replace the model used in the training script
-with your own model implemented within CompressAI, and then run the script for a
-simple training pipeline:
+dataset for trainning can be obtained from https://clic.compression.cc/2021/tasks/index.html. After downloading the dataset, please arange them in this style for training:
 
-```bash
-python3 examples/train.py -d /path/to/my/image/dataset/ --epochs 300 -lr 1e-4 --batch-size 16 --cuda --save
-```
-> **Note:** the training example uses a custom [ImageFolder](https://interdigitalinc.github.io/CompressAI/datasets.html#imagefolder) structure.
+--dataset
 
-A jupyter notebook illustrating the usage of a pre-trained model for learned image
-compression is also provided in the `examples` directory:
+----train
 
-```bash
-pip install -U ipython jupyter ipywidgets matplotlib
-jupyter notebook examples/
-```
+----val
 
-### Evaluation
+----test
 
-To evaluate a trained model on your own dataset, CompressAI provides an
-evaluation script:
+To train the model:
 
-```bash
-python3 -m compressai.utils.eval_model checkpoint /path/to/images/folder/ -a $ARCH -p $MODEL_CHECKPOINT...
-```
+`cd CompressAI`
 
-To evaluate provided pre-trained models:
+`python3 examples/train.py -m [model_name] -d ../dataset/ -e 200 -lr 1e-4 -n 4 --lambda 0.0125 --batch-size 4 --test-batch-size 4 --cuda --checkpoint-name ./lambda_0.0125`
 
-```bash
-python3 -m compressai.utils.eval_model pretrained /path/to/images/folder/ -a $ARCH -q $QUALITY_LEVELS...
-```
+Note: lambda is setting for balancing bpp and mse, which is chosen from [0.4, 0.2, 0.1, 0.05, 0.025, 0.0125, 0.00675].
 
-To plot results from bench/eval_model simulations (requires matplotlib by default): 
+#### evaluation: for model `elic2022-chandelier` and `mbt2018-mean` 
 
-```bash
-python3 -m compressai.utils.plot --help
-```
+`cd CompressAI`
 
-To evaluate traditional codecs:
+`python3 -m compressai.utils.eval_model checkpoint ../Chapter6_Template/foreman20_40_RGB/ -a [model_name] --cuda -m mse -d ./ -o [any_name] -p [model_weight.pth]`
 
-```bash
-python3 -m compressai.utils.bench --help
-python3 -m compressai.utils.bench bpg --help
-python3 -m compressai.utils.bench vtm --help
-```
 
-For video, similar tests can be run, CompressAI only includes ssf2020 for now:
+### Comparison AI inter-encoding with inter-encoding in CH5 (using `mbt2018-mean` for intra-encoding)
 
-```bash
-python3 -m compressai.utils.video.eval_model checkpoint /path/to/video/folder/ -a ssf2020 -p $MODEL_CHECKPOINT...
-python3 -m compressai.utils.video.eval_model pretrained /path/to/video/folder/ -a ssf2020 -q $QUALITY_LEVELS...
-python3 -m compressai.utils.video.bench x265 --help
-python3 -m compressai.utils.video.bench VTM --help
-python3 -m compressai.utils.video.plot --help
-```
+**dataset (vimeo-90K)**:
 
-## Tests
+dataset for trainning can be obtained from: http://toflow.csail.mit.edu/. (the Triplet dataset). After downloading the dataset, please arange them in this style for training:
 
-Run tests with `pytest`:
+--datset
 
-```bash
-pytest -sx --cov=compressai --cov-append --cov-report term-missing tests
-```
+----sequences
 
-Slow tests can be skipped with the `-m "not slow"` option.
+------00001
+
+--------img1
+
+--------img2
+
+--------img3
+
+------00002
+
+--------img1
+
+--------img2
+
+--------img3
+
+...
+
+----test.list (text file)
+
+----train.list (text file)
+
+#### train: for model `ssf2020` 
+
+`
+python3 examples/train_video.py -m ssf2020 -d [vimeo_triplet] -e 200 -lr 1e-4 -n 4 --lambda 0.4 --batch-size 4 --test-batch-size 4 --cuda --save --checkpoint-name ./lambda_0.4
+`
+
+Note: lambda is setting for balancing bpp and mse, which is chosen from [0.4, 0.2, 0.1, 0.05, 0.025, 0.0125, 0.00675].
+
+
+#### evaluation: for model `ssf2020`
+
+`cd CompressAI`
+
+`python3 -m compressai.utils.video.eval_model checkpoint /Chapter6_Template/foreman20_40_RGB -p ./[model_weight.pth] --cuda -a ssf2020 ./`
+
 
 
 ## License

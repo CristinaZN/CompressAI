@@ -38,6 +38,7 @@ import torch.optim as optim
 
 from torch.utils.data import DataLoader
 from torchvision import transforms
+sys.path.insert(0, '../../CompressAI/')
 
 from compressai.datasets import ImageFolder
 from compressai.losses import RateDistortionLoss
@@ -152,7 +153,7 @@ def test_epoch(epoch, test_dataloader, model, criterion):
 def save_checkpoint(state, is_best, filename="checkpoint.pth.tar"):
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, "checkpoint_best_loss.pth.tar")
+        shutil.copyfile(filename, f"{filename}_best.pth.tar")
 
 
 def parse_args(argv):
@@ -229,6 +230,7 @@ def parse_args(argv):
         help="gradient clipping max norm (default: %(default)s",
     )
     parser.add_argument("--checkpoint", type=str, help="Path to a checkpoint")
+    parser.add_argument("--checkpoint-name", type=str, help="Path to a checkpoint")
     args = parser.parse_args(argv)
     return args
 
@@ -269,7 +271,7 @@ def main(argv):
         pin_memory=(device == "cuda"),
     )
 
-    net = image_models[args.model](quality=3)
+    net = image_models[args.model](quality=5)
     net = net.to(device)
 
     if args.cuda and torch.cuda.device_count() > 1:
@@ -318,6 +320,7 @@ def main(argv):
                     "lr_scheduler": lr_scheduler.state_dict(),
                 },
                 is_best,
+                args.checkpoint_name
             )
 
 

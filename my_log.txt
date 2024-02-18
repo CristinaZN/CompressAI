@@ -1,0 +1,8 @@
+mean_scale:
+    lambda = [0.4, 0.2, 0.1, 0.05, 0.025, 0.0125, 0.00675]
+elic2022-chandelier:
+    lambda = [0.4, 0.2, 0.1, 0.05, 0.025, 0.0125, 0.00675]
+scale_space:
+    lambda = [0.4, 0.2, 0.1, 0.05, 0.025, 0.0125, 0.00675]
+
+model weight can be found at: 

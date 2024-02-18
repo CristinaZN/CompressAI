@@ -1,0 +1,21 @@
+{
+  "name": "mbt2018-mean-mse",
+  "description": "Inference (ans)",
+  "results": {
+    "psnr-rgb": [
+      37.10029057094029
+    ],
+    "ms-ssim-rgb": [
+      0.9904270683016095
+    ],
+    "bpp": [
+      2.1883567821067818
+    ],
+    "encoding_time": [
+      0.14419275238400414
+    ],
+    "decoding_time": [
+      0.01687945638384138
+    ]
+  }
+}

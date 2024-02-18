@@ -1,0 +1,10 @@
+{
+  "source": "foreman0020",
+  "name": "ssf2020",
+  "description": "Inference (ans)",
+  "results": {
+    "mse-rgb": 33.848934173583984,
+    "psnr-rgb": 32.84938430786133,
+    "bpp": 0.17370505651755652
+  }
+}

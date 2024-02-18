@@ -106,8 +106,8 @@ def inference(model, x):
     h, w = x.size(2), x.size(3)
     pad, unpad = compute_padding(h, w, min_div=2**6)  # pad to allow 6 strides of 2
 
-    x_padded = F.pad(x, pad, mode="constant", value=0)
-
+    # x_padded = F.pad(x, pad, mode="constant", value=0)
+    x_padded = F.pad(x, pad, mode="replicate")
     start = time.time()
     out_enc = model.compress(x_padded)
     enc_time = time.time() - start
@@ -304,7 +304,7 @@ def setup_args():
         "--quality",
         dest="qualities",
         type=str,
-        default="1",
+        default="5",
         help="Pretrained model qualities. (example: '1,2,3,4') (default: %(default)s)",
     )
 
