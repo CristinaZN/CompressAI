@@ -55,6 +55,8 @@ plt.plot(mbt2018_mean_bpp, mbt2018_mean_psnr)
 plt.plot(elic2022_bpp, elic2022_psnr)
 
 plt.legend(my_legend, bbox_to_anchor=(1.05, 1.0), borderaxespad=0, loc=2)
-
+plt.xlabel('bpp')
+plt.ylabel('psnr')
+plt.title("IVC_lab_final_project_result")
 plt.savefig("./IVC_final_project_result.png", bbox_inches='tight')
 plt.clf()
