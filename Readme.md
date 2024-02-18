@@ -50,7 +50,7 @@ pip install -U pip && pip install -e .
 
 **dataset(CLIC)**:
 
-dataset for trainning can be obtained from https://clic.compression.cc/2021/tasks/index.html. After downloading the dataset, please arange them in this style for training:
+dataset for training can be obtained from https://clic.compression.cc/2021/tasks/index.html. After downloading the dataset, please arrange them in this style for training:
 
 --dataset
 
@@ -79,7 +79,7 @@ Note: lambda is setting for balancing bpp and mse, which is chosen from [0.4, 0.
 
 **dataset (vimeo-90K)**:
 
-dataset for trainning can be obtained from: http://toflow.csail.mit.edu/. (the Triplet dataset). After downloading the dataset, please arange them in this style for training:
+dataset for training can be obtained from: http://toflow.csail.mit.edu/. (the Triplet dataset). After downloading the dataset, please arrange them in this style for training:
 
 --datset
 
