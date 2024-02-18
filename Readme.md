@@ -19,7 +19,7 @@ Also, I trained the AI-inter-encoding (`ScaleSpaceFlow`), which applies a simila
 
 This AI-inter-encoding (`ScaleSpaceFlow`) can be optimized by applying other better intra-encoding modules, such as `JointAutoregressiveHierarchicalPriors`, `Elic2022Chandelier`. However, training for those models is much more time-consuming than using `MeanScaleHyperprior`. Both `JointAutoregressiveHierarchicalPriors` and `Elic2022Chandelier` applies a sequencial encoding in their context-models, which could cost too much time on RTX3060 if I applied them into the `ScaleSpaceFlow`. So, I choose to try these two models, `MeanScaleHyperprior` and `ScaleSpaceFlow`, as a comparison with CH4 (intra-encoding) and CH5 (inter-encoding). Even using the fastest VAE-arch intra-encoding (`MeanScaleHyperprior`) costs about 2 weeks for training to get 7 different RD-points, which implies the practical diffculty when apply other sophisticated intra-encoding models in the inter-encoding model.
 
-
+The model weights can be found at my google drive: https://drive.google.com/drive/folders/1tvloIxHN4Mt39ZSnDwufKbpv8H1z8QeH?usp=drive_link
 
 
 ## Installation
